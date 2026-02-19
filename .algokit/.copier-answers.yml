@@ -1,0 +1,10 @@
+# Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
+_commit: 2.1.8
+_src_path: gh:algorandfoundation/algokit-fullstack-template
+author_email: vishnuk2006@protonmail.com
+author_name: Zorrojurro
+contract_name: hello_world
+deployment_language: python
+preset_name: starter
+project_name: project-aarna
+
