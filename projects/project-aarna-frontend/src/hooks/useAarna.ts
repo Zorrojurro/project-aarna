@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react'
+import { useState, useMemo, useCallback, useEffect } from 'react'
 import { useWallet } from '@txnlab/use-wallet-react'
 import { useSnackbar } from 'notistack'
 import { AlgorandClient } from '@algorandfoundation/algokit-utils'
@@ -29,6 +29,10 @@ export interface AarnaListing {
     active: boolean
 }
 
+/* ───────────────── LocalStorage keys ───────────────── */
+const LS_APP_ID = 'aarna_app_id'
+const LS_ASSET_ID = 'aarna_asset_id'
+
 /**
  * useAarna — central hook for all AarnaRegistry contract interactions (live mode).
  */
@@ -37,8 +41,14 @@ export function useAarna() {
     const { enqueueSnackbar } = useSnackbar()
 
     const [appClient, setAppClient] = useState<any>(null)
-    const [appId, setAppId] = useState<bigint | null>(null)
-    const [assetId, setAssetId] = useState<bigint | null>(null)
+    const [appId, setAppId] = useState<bigint | null>(() => {
+        const saved = localStorage.getItem(LS_APP_ID)
+        return saved ? BigInt(saved) : null
+    })
+    const [assetId, setAssetId] = useState<bigint | null>(() => {
+        const saved = localStorage.getItem(LS_ASSET_ID)
+        return saved ? BigInt(saved) : null
+    })
     const [busy, setBusy] = useState(false)
     const [projectCount, setProjectCount] = useState(0)
     const [projects, setProjects] = useState<AarnaProject[]>([])
@@ -125,6 +135,13 @@ export function useAarna() {
             setProjectCount(count)
             setTotalCreditsIssued(Number(state.totalCreditsIssued ?? 0))
 
+            // Fetch asset ID from on-chain state if we don't have it
+            const onChainAssetId = state.aarnaAsset ? BigInt(Number(state.aarnaAsset)) : null
+            if (onChainAssetId && onChainAssetId > 0n) {
+                setAssetId(onChainAssetId)
+                localStorage.setItem(LS_ASSET_ID, onChainAssetId.toString())
+            }
+
             // Fetch listings
             const lCount = Number(state.listingCount ?? 0)
             const onChainListings: AarnaListing[] = []
@@ -153,6 +170,29 @@ export function useAarna() {
         await fetchOnChainProjects(appClient)
     }, [appClient, fetchOnChainProjects])
 
+    // ═══════════════════════════════════════════════════
+    //  Auto-reconnect to existing contract on page load
+    // ═══════════════════════════════════════════════════
+    useEffect(() => {
+        if (!activeAddress || !appId || appClient) return
+        const reconnect = async () => {
+            try {
+                const factory = new AarnaRegistryFactory({
+                    algorand,
+                    defaultSender: activeAddress,
+                    defaultSigner: transactionSigner,
+                })
+                const client = factory.getAppClientById({ appId })
+                setAppClient(client)
+                await fetchOnChainProjects(client)
+                enqueueSnackbar(`Reconnected to app ${appId}`, { variant: 'info' })
+            } catch (e) {
+                console.warn('Auto-reconnect failed:', e)
+            }
+        }
+        reconnect()
+    }, [activeAddress, appId, appClient, algorand, transactionSigner, fetchOnChainProjects, enqueueSnackbar])
+
     // ─── Deploy ───
     const deploy = useCallback(async () => {
         if (!ensureWallet()) return
@@ -166,6 +206,7 @@ export function useAarna() {
             const { appClient: client } = await factory.send.create.init({ args: [], populateAppCallResources: false })
             setAppClient(client)
             setAppId(client.appId)
+            localStorage.setItem(LS_APP_ID, client.appId.toString())
             await fetchOnChainProjects(client)
             enqueueSnackbar(`App deployed! ID: ${client.appId}`, { variant: 'success' })
         } catch (e: any) {
@@ -203,7 +244,10 @@ export function useAarna() {
                 extraFee: AlgoAmount.MicroAlgo(2_000),
             })
             const id = r?.return as bigint | undefined
-            if (id) setAssetId(id)
+            if (id) {
+                setAssetId(id)
+                localStorage.setItem(LS_ASSET_ID, id.toString())
+            }
             enqueueSnackbar(`AARNA token ready: ASA ${id?.toString()}`, { variant: 'success' })
         } catch (e: any) { enqueueSnackbar(parseError(e), { variant: 'error' }) }
         finally { setBusy(false) }
