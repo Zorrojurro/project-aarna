@@ -201,21 +201,63 @@ export function useAarna() {
 
     // ═══════════════════════════════════════════════════
     //  Upgrade to full client once wallet connects
+    //  + auto-sync validator if on-chain state is wrong
     // ═══════════════════════════════════════════════════
     useEffect(() => {
         if (!activeAddress || !appId) return
-        try {
-            const factory = new AarnaRegistryFactory({
-                algorand,
-                defaultSender: activeAddress,
-                defaultSigner: transactionSigner,
-            })
-            const client = factory.getAppClientById({ appId })
-            setAppClient(client)
-        } catch (e) {
-            console.warn('Wallet reconnect failed:', e)
+        const connectAndSync = async () => {
+            try {
+                const factory = new AarnaRegistryFactory({
+                    algorand,
+                    defaultSender: activeAddress,
+                    defaultSigner: transactionSigner,
+                })
+                const client = factory.getAppClientById({ appId })
+                setAppClient(client)
+
+                // Check on-chain validator and auto-fix if mismatched
+                try {
+                    const vResult = await client.send.getValidator({ args: [] })
+                    const onChainValidator = vResult?.return as string | undefined
+                    console.log('[Aarna] On-chain validator:', onChainValidator, '| Expected:', VALIDATOR_ADDRESS)
+
+                    if (onChainValidator && onChainValidator !== VALIDATOR_ADDRESS) {
+                        console.warn('[Aarna] Validator mismatch! Attempting to re-set...')
+                        try {
+                            await client.send.setValidator({
+                                args: { addr: VALIDATOR_ADDRESS },
+                                sender: activeAddress,
+                                signer: transactionSigner,
+                            })
+                            console.log('[Aarna] Validator re-set successfully to', VALIDATOR_ADDRESS)
+                            enqueueSnackbar('Validator synced on-chain ✓', { variant: 'success' })
+                        } catch (setErr: any) {
+                            console.warn('[Aarna] Could not re-set validator (not admin?):', setErr?.message)
+                        }
+                    } else if (!onChainValidator || onChainValidator === 'AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAY5HFKQ') {
+                        // Zero address — validator never set
+                        console.warn('[Aarna] Validator is zero address! Setting for the first time...')
+                        try {
+                            await client.send.setValidator({
+                                args: { addr: VALIDATOR_ADDRESS },
+                                sender: activeAddress,
+                                signer: transactionSigner,
+                            })
+                            console.log('[Aarna] Validator set successfully to', VALIDATOR_ADDRESS)
+                            enqueueSnackbar('Validator set on-chain ✓', { variant: 'success' })
+                        } catch (setErr: any) {
+                            console.warn('[Aarna] Could not set validator (not admin?):', setErr?.message)
+                        }
+                    }
+                } catch (readErr) {
+                    console.warn('[Aarna] Could not read on-chain validator:', readErr)
+                }
+            } catch (e) {
+                console.warn('Wallet reconnect failed:', e)
+            }
         }
-    }, [activeAddress, appId, algorand, transactionSigner])
+        connectAndSync()
+    }, [activeAddress, appId, algorand, transactionSigner, enqueueSnackbar])
 
     // ─── Deploy ───
     const deploy = useCallback(async () => {
@@ -299,13 +341,16 @@ export function useAarna() {
     // ─── Approve Project ───
     const approveProject = useCallback(async (projectId: number, credits: number) => {
         if (!ensureWallet() || !needClient()) return
+        if (activeAddress !== VALIDATOR_ADDRESS) {
+            enqueueSnackbar('Only the validator wallet can approve projects', { variant: 'error' })
+            return
+        }
         setBusy(true)
         try {
             await appClient.send.approveProject({
                 args: { projectId: BigInt(projectId), credits: BigInt(credits) },
                 sender: activeAddress!,
                 signer: transactionSigner,
-                populateAppCallResources: false,
             })
             updateProjectStatus(projectId, 'verified', credits)
             await refreshProjects()
@@ -317,13 +362,16 @@ export function useAarna() {
     // ─── Reject Project ───
     const rejectProject = useCallback(async (projectId: number) => {
         if (!ensureWallet() || !needClient()) return
+        if (activeAddress !== VALIDATOR_ADDRESS) {
+            enqueueSnackbar('Only the validator wallet can reject projects', { variant: 'error' })
+            return
+        }
         setBusy(true)
         try {
             await appClient.send.rejectProject({
                 args: { projectId: BigInt(projectId) },
                 sender: activeAddress!,
                 signer: transactionSigner,
-                populateAppCallResources: false,
             })
             updateProjectStatus(projectId, 'rejected')
             await refreshProjects()
@@ -335,6 +383,10 @@ export function useAarna() {
     // ─── Issue Credits ───
     const issueCredits = useCallback(async (projectId: number) => {
         if (!ensureWallet() || !needClient()) return
+        if (activeAddress !== VALIDATOR_ADDRESS) {
+            enqueueSnackbar('Only the validator wallet can issue credits', { variant: 'error' })
+            return
+        }
         setBusy(true)
         try {
             const appAddr = appClient.appAddress

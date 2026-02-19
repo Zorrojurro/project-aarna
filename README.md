@@ -1,158 +1,276 @@
-# 🌊 Project Aarna — Decentralized MRV for India's Blue Carbon
+# Project Aarna
 
-> India's first blockchain-powered D-MRV (Decentralized Monitoring, Reporting & Verification) platform for coastal blue carbon ecosystems, built on **Algorand**.
+Decentralized MRV for India's Blue Carbon, built on Algorand.
 
-[![Built with AlgoKit](https://img.shields.io/badge/Built%20with-AlgoKit-0A6DEB?style=for-the-badge)](https://algorand.co/algokit)
-[![Algorand Testnet](https://img.shields.io/badge/Network-Algorand%20Testnet-09DE62?style=for-the-badge)](https://testnet.explorer.perawallet.app/)
-[![RIFT 2026](https://img.shields.io/badge/Hackathon-RIFT%202026-FF5D13?style=for-the-badge)](https://rift2026.com)
+RIFT 2026 Hackathon | PS4 — Carbon Credits & Sustainability
 
 ---
 
-## 🎯 Problem Statement
+## The Problem
 
-**PS4 — Build on Algorand: Carbon Credits & Sustainability**
+India has over 7,500 km of coastline. Mangroves, seagrasses, and wetlands along it — collectively known as blue carbon ecosystems — absorb 5 to 10 times more CO2 per hectare than terrestrial forests.
 
-Coastal ecosystems (mangroves, seagrasses, wetlands) sequester 5-10× more carbon per hectare than terrestrial forests. Yet there's no transparent, verifiable system to track India's blue carbon projects from monitoring to carbon credit issuance.
+Despite this, there is no transparent system to monitor, report, or verify the impact of these ecosystems. The existing MRV pipeline is paper-based, centralized, and opaque. Communities restoring mangroves in the Sundarbans have no way to prove their carbon impact, receive verifiable credits, or trade them. Everything depends on trusting intermediaries.
 
-## 💡 Solution
-
-**Project Aarna** provides an end-to-end D-MRV platform where:
-
-1. **Developers/Communities** submit ecosystem data with IPFS evidence
-2. **Validators (NCCR/experts)** review and verify project data on-chain
-3. **AARNA tokens** (Algorand Standard Assets) are minted as carbon credits
-4. The **Public Registry** provides transparency for all stakeholders
-
-All project lifecycle events are recorded on the Algorand blockchain, ensuring immutability and auditability.
+Aarna was built to change that.
 
 ---
 
-## 🏗️ Architecture
+## What Aarna Does
+
+Aarna is a Decentralized MRV (D-MRV) platform that takes a blue carbon project from submission to carbon credit issuance, entirely on-chain.
+
+1. A developer (community, NGO, forest department) submits a blue carbon project along with IPFS evidence.
+2. A validator (scientist, NCCR, expert body) reviews the submission and approves or rejects it on-chain.
+3. On approval, AARNA tokens (Algorand Standard Assets) are minted and transferred as carbon credits.
+4. Anyone can browse the public registry or trade credits on the marketplace.
+
+Every step is recorded on the Algorand blockchain. Every status change, every credit issued, every transaction is fully auditable.
+
+---
+
+## Live Demo
+
+**[project-aarna.netlify.app](https://project-aarna.netlify.app/)**
+
+Connect Pera Wallet on Testnet to interact with the deployed contract.
+
+Note: The validator wallet is preset. Judges and users can connect any Testnet wallet and submit a project as a developer. The contract supports a maximum of 4 project slots due to global state size constraints, so only one submission per evaluator is recommended.
+
+---
+
+## Testnet Deployments
+
+Both deployments are live and verifiable on-chain.
+
+**Current**
+
+| | |
+|---|---|
+| App ID | [`755799555`](https://testnet.explorer.perawallet.app/application/755799555/) |
+| AARNA ASA | [`755799568`](https://testnet.explorer.perawallet.app/asset/755799568/) |
+| Network | Algorand Testnet via [AlgoNode](https://algonode.io/) |
+| Validator | [`KI6X3F5...ENZUTA5CCA`](https://testnet.explorer.perawallet.app/address/KI6X3F5Y6CHH2MK4TA7RUVF43AXVGEAZN7TWT7BVNUU4JGQ5ENZUTA5CCA/) |
+
+**Previous (has transaction history)**
+
+| | |
+|---|---|
+| App ID | [`755793864`](https://testnet.explorer.perawallet.app/application/755793864/) |
+| AARNA ASA | [`755793884`](https://testnet.explorer.perawallet.app/asset/755793884/) |
+
+Verify on the [Algorand Testnet Explorer](https://testnet.explorer.perawallet.app/).
+
+---
+
+## Smart Contract
+
+The core of Aarna is `AarnaRegistry`, a single ARC-4 smart contract written in Python using AlgoPy and compiled through the Puya compiler. It runs entirely on-chain with no off-chain dependencies for critical data.
+
+The contract manages three roles — admin, validator, and developer — each enforced through on-chain assertions. The admin deploys the contract and assigns a validator. The validator reviews submitted projects and either approves or rejects them. On approval, the validator sets a credit amount and issues AARNA tokens directly to the submitter through an inner transaction.
+
+AARNA is an Algorand Standard Asset created by the contract itself via `itxn.AssetConfig`. It has a total supply of 10 million, zero decimals, and is fully managed by the contract address (manager, reserve, clawback, freeze all point to the application). This means all token operations — issuance, escrow, clawback — are handled through inner transactions without any external custody.
+
+Project data (name, location, ecosystem type, IPFS evidence CID, status, credit count, and submitter address) is stored directly in the contract's global state. The frontend reads this state to render dashboards and the registry. There is no off-chain database for project records.
+
+The marketplace uses the same contract. A holder can list AARNA tokens for sale at a specified ALGO price. The contract escrows the tokens via clawback, and on purchase, it forwards the ALGO payment to the seller and releases the tokens to the buyer — all within inner transactions.
+
+Status codes used in the contract: `0` = none, `1` = pending, `2` = verified, `3` = rejected, `4` = issued.
+
+---
+
+## Architecture
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                        Frontend (React + Vite)                   │
+│                                                                  │
+│  ┌──────────┐ ┌───────────┐ ┌──────────┐ ┌────────┐ ┌────────┐ │
+│  │ Landing  │ │ Developer │ │ Validator│ │Registry│ │Market- │ │
+│  │  Page    │ │ Dashboard │ │Dashboard │ │  Page  │ │ place  │ │
+│  └──────────┘ └─────┬─────┘ └────┬─────┘ └───┬────┘ └───┬────┘ │
+│                     │            │            │          │       │
+│              ┌──────┴────────────┴────────────┴──────────┴──┐   │
+│              │          useAarna.ts (React Hook)            │   │
+│              │   deploy · submit · approve · reject · issue │   │
+│              │   listForSale · buy · cancel · optIn         │   │
+│              └──────────────────┬────────────────────────────┘   │
+│                                 │                                │
+│              ┌──────────────────┴───────────────────┐            │
+│              │  @txnlab/use-wallet-react            │            │
+│              │  Pera Wallet · Defly · Exodus        │            │
+│              └──────────────────┬───────────────────┘            │
+└─────────────────────────────────┼────────────────────────────────┘
+                                  │ ARC-4 ABI calls
+                                  ▼
+┌──────────────────────────────────────────────────────────────────┐
+│               AarnaRegistry — Algorand Smart Contract            │
+│               (AlgoPy / Puya Compiler → ARC-4 ABI)              │
+│                                                                  │
+│  Roles:    admin ──► deploys, creates ASA, sets validator        │
+│            validator ──► approves/rejects, issues credits        │
+│            developer ──► submits projects                        │
+│            any holder ──► lists/buys credits                     │
+│                                                                  │
+│  State:    4 project slots (name, location, ecosystem,           │
+│            CID, status, credits, submitter)                      │
+│            4 marketplace listing slots                           │
+│            AARNA ASA (10M total supply)                          │
+│                                                                  │
+│  Inner     AssetConfig  → create AARNA token                    │
+│  Txns:     AssetTransfer → issue credits to submitter            │
+│            AssetTransfer → escrow/release on marketplace         │
+│            Payment       → forward ALGO to seller on buy         │
+└──────────────────────────────────────────────────────────────────┘
+                                  │
+                                  ▼
+                    ┌─────────────────────────┐
+                    │   Algorand Testnet      │
+                    │   via AlgoNode RPCs     │
+                    │   (algod + indexer)     │
+                    └─────────────────────────┘
+
+                    ┌─────────────────────────┐
+                    │   IPFS                  │
+                    │   Evidence stored as    │
+                    │   CID references        │
+                    └─────────────────────────┘
+```
+
+---
+
+## Screenshots
+
+### Landing Page
+![Landing Page](./screenshots/landing.jpeg)
+
+### Developer Dashboard
+![Developer Dashboard](./screenshots/developer.jpeg)
+
+### Public Registry
+![Public Registry](./screenshots/registry.jpeg)
+
+### Wallet — AARNA Credits Received
+![Wallet](./screenshots/wallet.jpeg)
+
+---
+
+## Algorand Integration
+
+Every meaningful action in Aarna touches the chain. This is not a wrapper around a database.
+
+**Smart Contract**
+
+The `AarnaRegistry` contract is a single ARC-4 application written in Python using AlgoPy/Puya. It handles the full project lifecycle:
+
+- `init()` — deploys the contract, sets the deployer as admin
+- `set_validator(addr)` — admin assigns a validator, enforced via `assert`
+- `submit_project(name, location, ecosystem, cid)` — anyone can submit, status starts as pending
+- `approve_project(id, credits)` / `reject_project(id)` — validator-only
+- `issue_credits(id)` — inner transaction (`itxn.AssetTransfer`) sends AARNA tokens to the submitter
+- `list_for_sale(amount, price)` / `buy_listing(id, payment)` — marketplace with escrow via clawback
+
+**AARNA Token**
+
+Created via `itxn.AssetConfig` inside `ensure_token()`. 10 million supply, zero decimals, managed and clawed back by the contract address. This is a native Algorand Standard Asset, not a wrapped token.
+
+**Inner Transactions**
+
+The contract issues 4 types:
+- `AssetConfig` — create the AARNA ASA
+- `AssetTransfer` — issue credits, handle marketplace escrow
+- `AssetTransfer` (with `asset_sender`) — clawback during listing
+- `Payment` — forward ALGO from buyer to seller
+
+**On-chain State**
+
+All project data (name, location, ecosystem, IPFS CID, status, credits, submitter address) lives in global state. The frontend reads it directly. No off-chain database is required for core data.
+
+---
+
+## Project Lifecycle
+
+```
+     Developer              Validator               Blockchain
+         │                      │                        │
+         │  submit_project()    │                        │
+         │─────────────────────►│                        │
+         │                      │   status = PENDING     │
+         │                      │───────────────────────►│
+         │                      │                        │
+         │                      │  approve_project()     │
+         │                      │───────────────────────►│
+         │                      │   status = VERIFIED    │
+         │                      │                        │
+         │                      │  issue_credits()       │
+         │                      │───────────────────────►│
+         │  ◄── AARNA tokens ──────── inner txn ────────│
+         │                      │   status = ISSUED      │
+         │                      │                        │
+```
+
+Status codes: `0` = none, `1` = pending, `2` = verified, `3` = rejected, `4` = issued.
+
+---
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Blockchain | Algorand Testnet |
+| Smart Contract | AlgoPy, compiled via Puya |
+| Carbon Credit Token | AARNA ASA |
+| Frontend | React 18, TypeScript, Vite |
+| Styling | TailwindCSS, daisyUI |
+| Wallet | Pera, Defly, Exodus via `@txnlab/use-wallet-react` |
+| Evidence | IPFS (CID references on-chain) |
+| Nodes | AlgoNode (algod + indexer) |
+| Tooling | AlgoKit CLI |
+
+---
+
+## Folder Structure
 
 ```
 project-aarna/
 ├── projects/
-│   ├── project-aarna-contracts/    # AlgoPy smart contract
+│   ├── project-aarna-contracts/
 │   │   └── smart_contracts/
 │   │       └── aarna_registry/
-│   │           └── contract.py     # AarnaRegistry ARC-4 contract
-│   └── project-aarna-frontend/     # React + Vite + TailwindCSS
-│       └── src/
-│           ├── pages/              # Landing, Developer, Validator, Registry
-│           ├── components/         # Navbar, ConnectWallet
-│           ├── hooks/useAarna.ts   # Contract interaction hook
-│           └── data/               # Mock Indian coastal project data
+│   │           └── contract.py
+│   │       └── artifacts/
+│   │
+│   └── project-aarna-frontend/
+│       ├── src/
+│       │   ├── pages/
+│       │   │   ├── Landing.tsx
+│       │   │   ├── Developer.tsx
+│       │   │   ├── Validator.tsx
+│       │   │   ├── Registry.tsx
+│       │   │   └── Marketplace.tsx
+│       │   ├── hooks/
+│       │   │   └── useAarna.ts
+│       │   ├── context/
+│       │   │   └── AarnaContext.tsx
+│       │   ├── contracts/
+│       │   │   └── AarnaRegistry.ts
+│       │   ├── constants/
+│       │   │   └── roles.ts
+│       │   └── data/
+│       │       └── mockProjects.ts
+│       └── .env
 └── README.md
 ```
 
-## ⚙️ Tech Stack
-
-| Layer | Technology |
-|---|---|
-| **Blockchain** | Algorand (Testnet) |
-| **Smart Contract** | AlgoPy (Puya compiler) |
-| **Token** | AARNA ASA (Algorand Standard Asset) |
-| **Frontend** | React 18, TypeScript, Vite |
-| **Styling** | TailwindCSS, daisyUI |
-| **Wallet** | Pera Wallet, Defly, Exodus |
-| **Data** | IPFS (via CID references) |
-| **Tooling** | AlgoKit CLI |
-
-## 🚀 Quick Start
-
-### Prerequisites
-
-- [Node.js ≥ 20](https://nodejs.org/)
-- [Python ≥ 3.12](https://www.python.org/)
-- [AlgoKit CLI](https://algorand.co/algokit)
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (for contract compilation)
-- [Pera Wallet](https://perawallet.app/) (set to Testnet)
-
-### Setup
-
-```bash
-# Clone the repo
-git clone <repo-url>
-cd project-aarna
-
-# Install frontend dependencies
-cd projects/project-aarna-frontend
-npm install
-
-# Start the development server
-npm run dev
-```
-
-The app will be available at `http://localhost:5173/`.
-
-### Building the Smart Contract
-
-```bash
-cd projects/project-aarna-contracts
-poetry install
-algokit compile python smart_contracts/aarna_registry/contract.py --out-dir=smart_contracts/artifacts/aarna_registry
-```
-
-## 📱 Features
-
-### 🌊 Landing Page
-- Animated ocean-themed hero with gradient background
-- Real-time impact stats (verified projects, carbon credits, CO₂ sequestered)
-- "What is Blue Carbon?" educational section
-- D-MRV workflow visualization
-
-### 🔬 Developer Dashboard
-- Deploy AarnaRegistry contract to Testnet
-- Create AARNA carbon credit token (ASA)
-- Submit blue carbon projects with IPFS evidence
-- Track submitted projects and their status
-
-### ✅ Validator Dashboard
-- Review pending project submissions
-- Approve projects with carbon credit allocation
-- Reject insufficient submissions
-- Issue AARNA tokens to project submitters
-
-### 🌍 Public Registry
-- Browse all projects (verified, pending, rejected)
-- Impact summary dashboard
-- Carbon credit and CO₂ metrics per project
-- Link to Algorand Testnet Explorer
-
-### 🎮 Demo Mode
-Built-in Demo mode for smooth presentations — all contract interactions return mock responses without requiring a wallet or Testnet connection.
-
-## 🌿 Blue Carbon Projects (Demo Data)
-
-| Project | Location | Ecosystem | Status |
-|---|---|---|---|
-| Sundarbans Mangrove Restoration | West Bengal | Mangrove | Verified |
-| Pichavaram Mangrove Conservation | Tamil Nadu | Mangrove | Verified |
-| Gulf of Kutch Seagrass Monitoring | Gujarat | Seagrass | Pending |
-| Chilika Wetland Carbon Assessment | Odisha | Wetland | Pending |
-
-## 🔗 Smart Contract — AarnaRegistry
-
-The `AarnaRegistry` is an ARC-4 Algorand smart contract built with AlgoPy:
-
-- **Multi-project tracking** — indexes up to 4 projects with metadata
-- **Role-based access** — admin sets validators, validators approve/reject
-- **AARNA ASA** — carbon credit token created via inner transactions
-- **Project lifecycle** — Pending → Verified/Rejected → Credits Issued
-- **Read methods** — full project data retrieval (name, location, ecosystem, CID, status, credits)
-
-## 📋 Attribution
-
-- Bootstrapped with [AlgoKit CLI](https://algorand.co/algokit) (Algorand Foundation)
-- Wallet integration: [@txnlab/use-wallet-react](https://github.com/TxnLab/use-wallet)
-- UI: React, Vite, [TailwindCSS](https://tailwindcss.com/), [daisyUI](https://daisyui.com/)
-- Algorand Python SDK: [AlgoPy / Puya](https://github.com/algorandfoundation/puya)
-- Testnet infrastructure: [AlgoNode](https://algonode.io/)
-
-## 👤 Team
-
-**Vishnu K** — Full-stack developer • RIFT 2026 Hackathon • PS4 Algorand
-
 ---
 
-*Built with 🌊 for India's coastline at RIFT 2026*
+## Team BRO CODE
+
+| Member |
+|---|
+| Vishnu K |
+| Siddharth P |
+| Revanth M |
+| P Yukthesh |
+
+RIFT 2026 | PS4 Algorand — Carbon Credits & Sustainability
