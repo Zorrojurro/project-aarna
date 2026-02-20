@@ -29,16 +29,6 @@ Every step is recorded on the Algorand blockchain. Every status change, every cr
 
 ---
 
-## Live Demo
-
-**[project-aarna.netlify.app](https://project-aarna.netlify.app/)**
-
-Connect Pera Wallet on Testnet to interact with the deployed contract.
-
-Note: The validator wallet is preset. Judges and users can connect any Testnet wallet and submit a project as a developer. The contract supports a maximum of 4 project slots due to global state size constraints, so only one submission per evaluator is recommended.
-
----
-
 ## Testnet Deployments
 
 Both deployments are live and verifiable on-chain.
@@ -60,6 +50,16 @@ Both deployments are live and verifiable on-chain.
 | AARNA ASA | [`755793884`](https://testnet.explorer.perawallet.app/asset/755793884/) |
 
 Verify on the [Algorand Testnet Explorer](https://testnet.explorer.perawallet.app/).
+
+---
+
+## Live Demo
+
+**[project-aarna.netlify.app](https://project-aarna.netlify.app/)**
+
+Connect Pera Wallet on Testnet to interact with the deployed contract.
+
+Note: The validator wallet is preset. Judges and users can connect any Testnet wallet and submit a project as a developer. The contract supports a maximum of 4 project slots due to global state size constraints, so only one submission per evaluator is recommended.
 
 ---
 
