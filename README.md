@@ -27,6 +27,8 @@ Aarna is a Decentralized MRV (D-MRV) platform that takes a blue carbon project f
 
 Every step is recorded on the Algorand blockchain. Every status change, every credit issued, every transaction is fully auditable.
 
+The idea is simple — even a farmer with a piece of wasteland along India's coastline can restore it, submit evidence, get it verified, and earn carbon credits as a real source of income. No middlemen, no tampering with the original data, no opaque bureaucracy. Just verifiable impact, recorded permanently on-chain.
+
 ---
 
 ## Testnet Deployments
@@ -40,7 +42,6 @@ Both deployments are live and verifiable on-chain.
 | App ID | [`755799555`](https://testnet.explorer.perawallet.app/application/755799555/) |
 | AARNA ASA | [`755799568`](https://testnet.explorer.perawallet.app/asset/755799568/) |
 | Network | Algorand Testnet via [AlgoNode](https://algonode.io/) |
-| Validator | [`KI6X3F5...ENZUTA5CCA`](https://testnet.explorer.perawallet.app/address/KI6X3F5Y6CHH2MK4TA7RUVF43AXVGEAZN7TWT7BVNUU4JGQ5ENZUTA5CCA/) |
 
 **Previous (has transaction history)**
 

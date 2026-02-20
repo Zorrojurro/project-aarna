@@ -239,13 +239,13 @@ export default function Landing() {
                         </span>
                     </div>
 
-                    <h1 className="reveal-up font-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold text-white mt-8 leading-tight" style={{ letterSpacing: '-0.03em' }}>
-                        Blue Carbon,
+                    <h1 className="reveal-up font-display text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold mt-8 leading-tight" style={{ letterSpacing: '-0.03em', textShadow: '0 2px 30px rgba(0,0,0,0.5), 0 0 60px rgba(0,105,148,0.3)' }}>
+                        <span className="sheen-text-hero">Blue Carbon,</span>
                         <br />
-                        <span className="text-accent">Verified On-Chain</span>
+                        <span className="text-accent" style={{ textShadow: '0 0 40px rgba(0,229,204,0.5)' }}>Verified On-Chain</span>
                     </h1>
 
-                    <p className="reveal-up mt-6 text-lg sm:text-xl max-w-2xl mx-auto leading-relaxed" style={{ color: '#d0e6f0' }}>
+                    <p className="reveal-up mt-6 text-lg sm:text-xl max-w-2xl mx-auto leading-relaxed font-medium" style={{ color: '#ffffff', textShadow: '0 1px 20px rgba(0,0,0,0.6)' }}>
                         India's first decentralized MRV platform — monitoring, reporting, and verifying coastal ecosystem restoration on Algorand.
                     </p>
 
@@ -305,52 +305,48 @@ export default function Landing() {
                 <div className="relative max-w-6xl mx-auto px-6" style={{ zIndex: 10 }}>
                     <div className="reveal-up text-center mb-14">
                         <h2 className="font-display text-3xl sm:text-4xl font-bold text-white">
-                            Real Impact, <span className="text-seagrass">Verified On-Chain</span>
+                            Problems We <span className="text-accent">Solve</span>
                         </h2>
                         <p className="mt-3 text-muted text-base sm:text-lg">
-                            Transparent metrics from verified blue carbon restoration projects
+                            India's blue carbon ecosystems face critical threats — Aarna brings transparency and accountability
                         </p>
                     </div>
 
-                    <div className="stagger-kids grid grid-cols-2 md:grid-cols-4 gap-5">
+                    <div className="stagger-kids grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
                         {[
-                            { icon: <IconShield />, value: '12', label: 'Projects Verified' },
-                            { icon: <IconCoin />, value: '45,800', label: 'Credits Issued' },
-                            { icon: <IconLeaf />, value: '2,340', label: 'tCO₂ Sequestered' },
-                            { icon: <IconGlobe />, value: '4', label: 'Ecosystems Monitored' },
+                            {
+                                icon: <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#FF6B6B" strokeWidth="1.5" strokeLinecap="round"><path d="M12 9v4M12 17h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" /></svg>,
+                                title: 'Opaque Carbon Markets',
+                                desc: 'Carbon credits are traded without verifiable proof of ecosystem impact — leading to fraud and greenwashing.',
+                                color: '#FF6B6B',
+                            },
+                            {
+                                icon: <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#FFD93D" strokeWidth="1.5" strokeLinecap="round"><circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" /></svg>,
+                                title: 'Slow Manual MRV',
+                                desc: 'Traditional MRV takes months of paperwork — Aarna automates verification with blockchain-backed transparency.',
+                                color: '#FFD93D',
+                            },
+                            {
+                                icon: <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#00E5CC" strokeWidth="1.5" strokeLinecap="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" /><circle cx="9" cy="7" r="4" /><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" /></svg>,
+                                title: 'Communities Left Out',
+                                desc: 'Coastal communities doing restoration work rarely see fair compensation — Aarna ensures direct, traceable credit issuance.',
+                                color: '#00E5CC',
+                            },
+                            {
+                                icon: <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#9F7AEA" strokeWidth="1.5" strokeLinecap="round"><path d="M3 3l18 18M10.5 10.677a2 2 0 002.823 2.823M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19" /></svg>,
+                                title: 'Zero Accountability',
+                                desc: 'No public audit trail means bad actors go unchecked — every Aarna action is permanently recorded on Algorand.',
+                                color: '#9F7AEA',
+                            },
                         ].map((s, i) => (
-                            <div key={i} className="g-card stat-glow p-6 text-center">
-                                <div className="flex justify-center mb-3">{s.icon}</div>
-                                <div className="text-2xl sm:text-3xl font-bold text-white font-display">{s.value}</div>
-                                <div className="text-xs sm:text-sm text-muted mt-1">{s.label}</div>
+                            <div key={i} className="g-card hover-card p-6 text-center">
+                                <div className="w-14 h-14 rounded-xl mx-auto flex items-center justify-center mb-4" style={{ background: `${s.color}12`, border: `1px solid ${s.color}30` }}>
+                                    {s.icon}
+                                </div>
+                                <h3 className="text-base font-bold text-white mb-2">{s.title}</h3>
+                                <p className="text-muted text-xs leading-relaxed">{s.desc}</p>
                             </div>
                         ))}
-                    </div>
-
-                    {/* Featured project */}
-                    <div className="reveal-up mt-12">
-                        <div className="g-card p-7" style={{ background: 'linear-gradient(135deg, rgba(0,105,148,0.12), rgba(16,185,129,0.08))' }}>
-                            <div className="flex flex-col md:flex-row items-center gap-6">
-                                <div className="w-16 h-16 rounded-xl flex items-center justify-center" style={{ background: 'rgba(0,229,204,0.08)', border: '1px solid rgba(0,229,204,0.15)' }}>
-                                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#00E5CC" strokeWidth="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" /><path d="M9 12l2 2 4-4" /></svg>
-                                </div>
-                                <div className="flex-1 text-center md:text-left">
-                                    <div className="text-xs font-semibold tracking-wider text-accent mb-1 uppercase">Featured Project</div>
-                                    <h3 className="text-xl font-bold text-white">Sundarbans Delta Mangrove Restoration</h3>
-                                    <p className="text-muted text-sm mt-1">West Bengal, India · Mangrove Ecosystem · 850 hectares</p>
-                                </div>
-                                <div className="flex gap-6 text-center">
-                                    <div>
-                                        <div className="text-xl font-bold text-seagrass">12,450</div>
-                                        <div className="text-xs text-muted">tCO₂e</div>
-                                    </div>
-                                    <div>
-                                        <div className="text-xl font-bold text-accent">850</div>
-                                        <div className="text-xs text-muted">Hectares</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
                     </div>
                 </div>
 
@@ -394,12 +390,33 @@ export default function Landing() {
                 {/* Content (z-index: 10) */}
                 <div className="relative max-w-6xl mx-auto px-6" style={{ zIndex: 10 }}>
                     <div className="reveal-up text-center mb-14">
-                        <h2 className="font-display text-3xl sm:text-4xl font-bold text-white">
+                        <h2 className="font-display text-3xl sm:text-5xl font-bold text-white">
                             What is <span className="text-accent">Blue Carbon</span>?
                         </h2>
-                        <p className="mt-3 text-muted text-base sm:text-lg max-w-2xl mx-auto">
-                            Harnessing the power of coastal and marine ecosystems to sequester carbon and combat climate change
+                        <p className="mt-4 text-muted text-base sm:text-lg max-w-3xl mx-auto leading-relaxed">
+                            Coastal and marine ecosystems — mangroves, seagrass, and wetlands — capture carbon <strong style={{ color: '#10B981' }}>up to 10× faster</strong> than terrestrial forests.
+                            They cover less than 2% of total ocean area but store <strong style={{ color: '#00E5CC' }}>over 50%</strong> of all marine carbon. Protecting them is humanity's most powerful climate lever.
                         </p>
+                    </div>
+
+                    {/* Key stat banner */}
+                    <div className="reveal-up mb-10">
+                        <div className="g-card p-6 md:p-8" style={{ background: 'linear-gradient(135deg, rgba(0,229,204,0.08), rgba(16,185,129,0.05), rgba(0,105,148,0.08))' }}>
+                            <div className="grid grid-cols-3 gap-4 text-center">
+                                <div>
+                                    <div className="text-2xl sm:text-4xl font-bold font-display text-accent">83%</div>
+                                    <div className="text-xs sm:text-sm text-muted mt-1">of global carbon cycle passes through oceans</div>
+                                </div>
+                                <div>
+                                    <div className="text-2xl sm:text-4xl font-bold font-display text-seagrass">4×</div>
+                                    <div className="text-xs sm:text-sm text-muted mt-1">faster carbon capture than rainforests</div>
+                                </div>
+                                <div>
+                                    <div className="text-2xl sm:text-4xl font-bold font-display" style={{ color: '#9F7AEA' }}>$150B</div>
+                                    <div className="text-xs sm:text-sm text-muted mt-1">projected blue carbon market by 2030</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <div className="stagger-kids grid md:grid-cols-3 gap-6">
@@ -407,10 +424,10 @@ export default function Landing() {
                             {
                                 title: 'Mangroves',
                                 stat: '4× faster carbon sequestration',
-                                desc: 'Coastal forests with dense root systems that act as natural storm barriers while capturing CO₂ at rates far exceeding tropical rainforests.',
+                                desc: 'Coastal forests with dense root systems that act as natural storm barriers while capturing CO₂ at rates far exceeding tropical rainforests. India has 4,975 km² of mangrove cover.',
                                 color: '#10B981',
                                 icon: (
-                                    <svg width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="#10B981" strokeWidth="1.3">
+                                    <svg width="48" height="48" viewBox="0 0 40 40" fill="none" stroke="#10B981" strokeWidth="1.3">
                                         <path d="M20,38 L20,15" />
                                         <path d="M20,15 C15,10 8,8 5,12 C3,14 8,18 15,15 C12,10 10,5 14,3 C17,1 19,8 20,15 Z" />
                                         <path d="M20,15 C25,10 32,8 35,12 C37,14 32,18 25,15 C28,10 30,5 26,3 C23,1 21,8 20,15 Z" />
@@ -424,7 +441,7 @@ export default function Landing() {
                                 desc: 'Underwater grasslands covering less than 0.2% of the ocean floor yet responsible for a significant fraction of total marine carbon sequestration.',
                                 color: '#00E5CC',
                                 icon: (
-                                    <svg width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="#00E5CC" strokeWidth="1.3">
+                                    <svg width="48" height="48" viewBox="0 0 40 40" fill="none" stroke="#00E5CC" strokeWidth="1.3">
                                         <path d="M10,38 C12,28 8,18 12,8" /><path d="M18,38 C16,25 20,15 17,5" />
                                         <path d="M25,38 C27,26 23,16 26,6" /><path d="M32,38 C30,30 34,20 31,10" />
                                     </svg>
@@ -436,7 +453,7 @@ export default function Landing() {
                                 desc: 'Tidal marshes that filter water, protect shorelines from erosion and storms while storing massive quantities of CO₂ in nutrient-rich soils.',
                                 color: '#006994',
                                 icon: (
-                                    <svg width="40" height="40" viewBox="0 0 40 40" fill="none" stroke="#006994" strokeWidth="1.3">
+                                    <svg width="48" height="48" viewBox="0 0 40 40" fill="none" stroke="#006994" strokeWidth="1.3">
                                         <path d="M5,25 C10,23 15,20 20,22 C25,24 30,20 35,22" />
                                         <path d="M5,30 C12,28 18,25 25,28 C30,30 35,27 38,28" />
                                         <path d="M8,35 C15,33 22,30 30,33 C35,34 38,32 40,33" />
@@ -446,13 +463,13 @@ export default function Landing() {
                                 ),
                             },
                         ].map((item, i) => (
-                            <div key={i} className="g-card p-7 group cursor-default">
+                            <div key={i} className="g-card hover-card p-7 group cursor-default">
                                 <div className="mb-5 flex justify-center transition-transform duration-500 group-hover:scale-110">
                                     {item.icon}
                                 </div>
                                 <h3 className="text-lg font-bold text-white text-center mb-2">{item.title}</h3>
                                 <p className="text-muted text-sm text-center leading-relaxed">{item.desc}</p>
-                                <div className="mt-5 rounded-lg p-3 text-center" style={{ background: 'rgba(255,255,255,0.03)' }}>
+                                <div className="mt-5 rounded-lg p-3 text-center" style={{ background: `${item.color}08`, border: `1px solid ${item.color}15` }}>
                                     <div className="text-sm font-semibold" style={{ color: item.color }}>{item.stat}</div>
                                 </div>
                             </div>
@@ -585,15 +602,24 @@ export default function Landing() {
                         })}
                     </div>
 
-                    {/* Trust badge */}
+                    {/* Trust badge with lock icon */}
                     <div className="reveal-up mt-14 text-center">
-                        <div className="trust-pill inline-flex">
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00E5CC" strokeWidth="1.5">
-                                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
-                            </svg>
-                            <div className="text-left">
-                                <div className="text-white text-sm font-semibold">Powered by Algorand</div>
-                                <div className="text-muted text-xs">Carbon-negative Layer 1 · Instant finality · Low fees</div>
+                        <div className="flex flex-col items-center gap-3">
+                            {/* Lock icon */}
+                            <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ background: 'rgba(0,229,204,0.1)', border: '1px solid rgba(0,229,204,0.25)' }}>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00E5CC" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                                    <path d="M7 11V7a5 5 0 0110 0v4" />
+                                </svg>
+                            </div>
+                            <div className="trust-pill inline-flex">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#00E5CC" strokeWidth="1.5">
+                                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+                                </svg>
+                                <div className="text-left">
+                                    <div className="text-white text-sm font-semibold">Powered by Algorand</div>
+                                    <div className="text-muted text-xs">Carbon-negative Layer 1 · Instant finality · Low fees</div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -634,9 +660,8 @@ export default function Landing() {
                             <div className="text-xs font-semibold tracking-wider uppercase mb-3" style={{ color: '#5A7080' }}>Platform</div>
                             <div className="flex flex-col gap-2">
                                 <Link to="/" className="footer-link">Home</Link>
-                                <Link to="/developer" className="footer-link">Developer</Link>
-                                <Link to="/validator" className="footer-link">Validator</Link>
                                 <Link to="/registry" className="footer-link">Registry</Link>
+                                <Link to="/marketplace" className="footer-link">Marketplace</Link>
                             </div>
                         </div>
                         <div>
