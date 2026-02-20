@@ -5,7 +5,7 @@
  */
 
 /** The fixed validator wallet address (Algorand Testnet) */
-export const VALIDATOR_ADDRESS = 'KI6X3F5Y6CHH2MK4TA7RUVF43AXVGEAZN7TWT7BVNUU4JGQ5ENZUTA5CCA'
+export const VALIDATOR_ADDRESS = 'CAVWL5TGO4XTTNAMPYRFSY7ZQ73H7YDWE5UP5DGD26DLI5MEL2FCMIZAYM'
 
 /** Check if a wallet address is the validator */
 export const isValidator = (address: string | null | undefined): boolean =>
