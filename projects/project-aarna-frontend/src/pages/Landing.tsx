@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react'
+import React, { useEffect, useState, useCallback, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { useMotionValue, useMotionTemplate, motion } from 'framer-motion'
 import { generateRandomString } from '@/components/ui/evervault-card'
@@ -9,6 +9,7 @@ function DmrvStepCard({ step, title, desc, color }: { step: string; title: strin
     const mouseY = useMotionValue(0)
     const [randomString, setRandomString] = useState('')
     const [hovered, setHovered] = useState(false)
+    const lastUpdate = useRef(0)
 
     useEffect(() => {
         setRandomString(generateRandomString(800))
@@ -18,7 +19,11 @@ function DmrvStepCard({ step, title, desc, color }: { step: string; title: strin
         const { left, top } = currentTarget.getBoundingClientRect()
         mouseX.set(clientX - left)
         mouseY.set(clientY - top)
-        setRandomString(generateRandomString(800))
+        const now = Date.now()
+        if (now - lastUpdate.current > 150) {
+            lastUpdate.current = now
+            setRandomString(generateRandomString(800))
+        }
     }, [mouseX, mouseY])
 
     const maskImage = useMotionTemplate`radial-gradient(200px at ${mouseX}px ${mouseY}px, white, transparent)`
@@ -181,10 +186,10 @@ export default function Landing() {
     return (
         <div style={{ overflowX: 'hidden' }}>
             <div className="bubbles-bg">
-                {[12, 20, 8, 16, 24, 10, 18, 6, 14, 22].map((s, i) => (
+                {[12, 16, 8, 20, 10].map((s, i) => (
                     <div key={i} className="bub" style={{
-                        left: `${5 + i * 9.5}%`, width: s, height: s,
-                        animationDuration: `${8 + i * 1.8}s`, animationDelay: `${i * 1.2}s`
+                        left: `${8 + i * 20}%`, width: s, height: s,
+                        animationDuration: `${10 + i * 3}s`, animationDelay: `${i * 2}s`
                     }} />
                 ))}
             </div>

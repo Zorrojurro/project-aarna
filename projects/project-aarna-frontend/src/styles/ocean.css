@@ -254,14 +254,13 @@
 }
 
 .g-card {
-    background: rgba(12, 22, 42, 0.55);
-    backdrop-filter: blur(22px);
-    -webkit-backdrop-filter: blur(22px);
+    background: rgba(12, 22, 42, 0.85);
     border: 1px solid rgba(255, 255, 255, 0.06);
     border-radius: 14px;
     transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
         box-shadow 0.35s cubic-bezier(0.22, 1, 0.36, 1),
         border-color 0.35s ease;
+    will-change: transform;
 }
 
 .g-card:hover {
@@ -362,7 +361,6 @@
     border: 1px solid rgba(255, 255, 255, 0.25);
     cursor: pointer;
     transition: all 0.25s ease;
-    backdrop-filter: blur(8px);
     text-decoration: none;
     display: inline-flex;
     align-items: center;
@@ -394,6 +392,7 @@
     inset: 0;
     pointer-events: none;
     overflow: hidden;
+    contain: layout style;
 }
 
 /* Fish */
@@ -401,7 +400,7 @@
     position: absolute;
     opacity: 0.4;
     fill: #00E5CC;
-    filter: drop-shadow(0 0 8px rgba(0, 229, 204, 0.3));
+    will-change: transform;
 }
 
 .fish-a {
@@ -443,7 +442,7 @@
     opacity: 0.45;
     fill: #00E5CC;
     animation: turtleGlide 40s linear infinite;
-    filter: drop-shadow(0 0 18px rgba(0, 229, 204, 0.35));
+    will-change: transform;
 }
 
 .turtle-front {
@@ -456,7 +455,7 @@
     opacity: 0.35;
     fill: rgba(159, 122, 234, 0.7);
     animation: jellyPulse 6s ease-in-out infinite;
-    filter: drop-shadow(0 0 14px rgba(159, 122, 234, 0.3));
+    will-change: transform;
 }
 
 /* Kelp */
@@ -467,7 +466,7 @@
     fill: #0D6B4A;
     transform-origin: bottom center;
     animation: kelpSway 5s ease-in-out infinite;
-    filter: drop-shadow(0 0 6px rgba(13, 107, 74, 0.2));
+    will-change: transform;
 }
 
 .kelp-front {
@@ -490,6 +489,7 @@
     background: radial-gradient(circle at 35% 35%, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.04));
     border: 1px solid rgba(255, 255, 255, 0.1);
     animation: bubbleUp linear infinite;
+    will-change: transform, opacity;
 }
 
 .sun-rays {
