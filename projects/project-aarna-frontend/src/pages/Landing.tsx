@@ -39,7 +39,7 @@ function DmrvStepCard({ step, title, desc, color }: { step: string; title: strin
             {/* EvervaultCard-style hover pattern layer */}
             <div className="pointer-events-none absolute inset-0 rounded-2xl">
                 <motion.div
-                    className="absolute inset-0 rounded-2xl opacity-0 group-hover/step:opacity-100 backdrop-blur-xl transition duration-500"
+                    className="absolute inset-0 rounded-2xl opacity-0 group-hover/step:opacity-100 transition duration-500"
                     style={{
                         ...maskStyle,
                         background: `linear-gradient(135deg, ${color}40, ${color}15)`,
@@ -82,10 +82,6 @@ function WaveArt() {
                         height: 'auto',
                         display: 'block',
                         opacity: 0.75,
-                        mixBlendMode: 'multiply',
-                        filter: 'contrast(1.2) saturate(1.3) brightness(0.9)',
-                        maskImage: 'linear-gradient(to bottom, black 70%, transparent 100%)',
-                        WebkitMaskImage: 'linear-gradient(to bottom, black 70%, transparent 100%)',
                     }}
                 />
             </div>
@@ -268,8 +264,8 @@ export default function Landing() {
             <section className="z-shallow relative" style={{ padding: '100px 0 120px' }}>
                 {/* Sun rays */}
                 <div className="sun-rays">
-                    {[10, 28, 52, 72, 88].map((l, i) => (
-                        <div key={i} className="ray" style={{ left: `${l}%`, width: 60 + i * 15, animationDelay: `${i * 0.8}s` }} />
+                    {[15, 50, 82].map((l, i) => (
+                        <div key={i} className="ray" style={{ left: `${l}%`, width: 60 + i * 20, animationDelay: `${i * 1.2}s` }} />
                     ))}
                 </div>
 
@@ -341,14 +337,12 @@ export default function Landing() {
                 {/* Bio-luminescent dots */}
                 <div className="marine-layer">
                     {[
-                        { t: '8%', l: '12%', d: 0, s: 5 }, { t: '22%', l: '45%', d: 1.2, s: 4 },
-                        { t: '38%', l: '78%', d: 0.6, s: 6 }, { t: '55%', l: '20%', d: 2, s: 3 },
-                        { t: '70%', l: '65%', d: 1.5, s: 5 }, { t: '82%', l: '90%', d: 0.3, s: 4 },
-                        { t: '15%', l: '88%', d: 2.5, s: 3 }, { t: '60%', l: '8%', d: 1.8, s: 4 },
+                        { t: '15%', l: '20%', d: 0, s: 5 }, { t: '45%', l: '65%', d: 1.2, s: 4 },
+                        { t: '75%', l: '85%', d: 2, s: 5 },
                     ].map((d, i) => (
                         <div key={i} className="bio-dot" style={{
                             top: d.t, left: d.l, width: d.s, height: d.s,
-                            animationDelay: `${d.d}s`, animationDuration: `${3 + i * 0.5}s`
+                            animationDelay: `${d.d}s`, animationDuration: `${4 + i * 1}s`
                         }} />
                     ))}
                 </div>
@@ -359,9 +353,7 @@ export default function Landing() {
                 </div>
 
                 {/* ── Jellyfish at various z-indices ── */}
-                <div className="marine-layer" style={{ zIndex: 1 }}>
-                    <JellySvg size={50} className="svg-jelly" style={{ top: '18%', right: '15%', animationDelay: '0s' }} />
-                </div>
+
 
                 {/* Content (z-index: 10) */}
                 <div className="relative max-w-6xl mx-auto px-6" style={{ zIndex: 10 }}>
@@ -455,9 +447,7 @@ export default function Landing() {
 
                 {/* ── Turtle + jellyfish IN FRONT (overlapping cards → 3D) ── */}
                 <div className="marine-layer turtle-front">
-                    <JellySvg size={55} className="svg-jelly" style={{ top: '40%', left: '5%', animationDelay: '2s' }} />
-                    <JellySvg size={45} className="svg-jelly" style={{ top: '65%', right: '8%', animationDelay: '3s' }} />
-                    <TurtleSvg size={120} className="svg-turtle" />
+                    <JellySvg size={45} className="svg-jelly" style={{ top: '50%', left: '5%', animationDelay: '2s' }} />
                 </div>
             </section>
 
@@ -467,13 +457,12 @@ export default function Landing() {
                 {/* Deep glow spots */}
                 <div className="marine-layer">
                     {[
-                        { t: '10%', l: '20%', d: 0, s: 4 }, { t: '30%', l: '70%', d: 1.5, s: 5 },
-                        { t: '50%', l: '40%', d: 0.8, s: 3 }, { t: '75%', l: '85%', d: 2.2, s: 4 },
-                        { t: '20%', l: '90%', d: 1, s: 3 }, { t: '65%', l: '15%', d: 2.8, s: 5 },
+                        { t: '15%', l: '30%', d: 0.5, s: 4 }, { t: '55%', l: '75%', d: 1.5, s: 3 },
+                        { t: '80%', l: '15%', d: 2.5, s: 4 },
                     ].map((d, i) => (
                         <div key={i} className="bio-dot" style={{
                             top: d.t, left: d.l, width: d.s, height: d.s,
-                            animationDelay: `${d.d}s`, animationDuration: `${4 + i * 0.6}s`
+                            animationDelay: `${d.d}s`, animationDuration: `${5 + i * 0.8}s`
                         }} />
                     ))}
                 </div>
@@ -608,12 +597,11 @@ export default function Landing() {
                 {/* Sea plants / kelp behind footer */}
                 <div className="marine-layer" style={{ zIndex: 1 }}>
                     {[
-                        { l: '3%', h: 180, d: 0 }, { l: '10%', h: 240, d: 0.4 },
-                        { l: '85%', h: 200, d: 0.8 }, { l: '92%', h: 260, d: 0.2 },
-                        { l: '45%', h: 160, d: 1.2 },
+                        { l: '8%', h: 200, d: 0 }, { l: '88%', h: 240, d: 0.5 },
+                        { l: '45%', h: 160, d: 1 },
                     ].map((k, i) => (
                         <KelpSvg key={i} height={k.h} className="svg-kelp" style={{
-                            left: k.l, animationDelay: `${k.d}s`, animationDuration: `${4 + i * 0.8}s`, color: '#0D6B4A'
+                            left: k.l, animationDelay: `${k.d}s`, animationDuration: `${5 + i * 1}s`, color: '#0D6B4A'
                         }} />
                     ))}
                 </div>
@@ -654,10 +642,7 @@ export default function Landing() {
                 </div>
 
                 {/* Kelp fronds IN FRONT of footer (3D depth) */}
-                <div className="marine-layer kelp-front">
-                    <KelpSvg height={150} className="svg-kelp" style={{ left: '18%', animationDelay: '0.6s', color: '#0A5A3E' }} />
-                    <KelpSvg height={130} className="svg-kelp" style={{ left: '75%', animationDelay: '1s', color: '#0A5A3E' }} />
-                </div>
+
 
                 {/* Sandy bottom */}
                 <div className="absolute bottom-0 left-0 w-full" style={{ height: 30, background: 'linear-gradient(180deg, transparent, rgba(180,150,100,0.03))' }} />
