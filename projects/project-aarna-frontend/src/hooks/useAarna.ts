@@ -84,21 +84,18 @@ export function useAarna() {
         const msg = e?.message || String(e)
         if (msg.includes('unauthorized: admin only')) return 'Only the admin can perform this action'
         if (msg.includes('unauthorized: validator only')) return 'Only the validator can perform this action'
-        if (msg.includes('max projects reached')) return 'Maximum of 4 projects reached'
-        if (msg.includes('max listings reached')) return 'Maximum of 4 listings reached'
         if (msg.includes('project not pending')) return 'Project is not in pending status'
         if (msg.includes('project not verified')) return 'Project must be verified before issuing credits'
         if (msg.includes('listing not active')) return 'This listing is no longer active'
         if (msg.includes('insufficient payment')) return 'Not enough ALGO sent for this purchase'
         if (msg.includes('only seller can cancel')) return 'Only the seller can cancel this listing'
         if (msg.includes('no AARNA token')) return 'Create the AARNA token first'
-        // Catch raw AVM assert failures from simulate
         if (msg.includes('assert failed') || msg.includes('Error resolving execution info via simulate')) {
             if (msg.includes('pc=4245') || msg.includes('pc=3507')) return 'Unauthorized: only the validator wallet can approve/reject projects'
             if (msg.includes('pc=3497') || msg.includes('pc=2757')) return 'Unauthorized: only the admin wallet can perform this action'
-            return 'Transaction failed â€” the project may already be processed, or your wallet is not authorized'
+            return 'Transaction failed — the project may already be processed, or your wallet is not authorized'
         }
-        return msg.length > 120 ? msg.slice(0, 120) + 'â€¦' : msg
+        return msg.length > 120 ? msg.slice(0, 120) + '…' : msg
     }, [])
 
     const updateProjectStatus = useCallback((id: number, status: AarnaProject['status'], credits?: number) => {
@@ -111,61 +108,64 @@ export function useAarna() {
         0: 'pending', 1: 'pending', 2: 'verified', 3: 'rejected', 4: 'issued',
     }
 
+    // ─── Fetch from box storage — direct algod reads, no wallet needed ────────
     const fetchOnChainProjects = useCallback(async (client: any) => {
         try {
+            // Global state for counters + asset ID
             const state = await client.state.global.getAll()
             const count = Number(state.projectCount ?? 0)
-            const onChain: AarnaProject[] = []
-            for (let i = 0; i < Math.min(count, 4); i++) {
-                const name = state[`p${i}Name`]?.asString?.() ?? state[`p${i}Name`] ?? ''
-                const location = state[`p${i}Location`]?.asString?.() ?? state[`p${i}Location`] ?? ''
-                const ecosystem = state[`p${i}Ecosystem`]?.asString?.() ?? state[`p${i}Ecosystem`] ?? ''
-                const cid = state[`p${i}Cid`]?.asString?.() ?? state[`p${i}Cid`] ?? ''
-                const statusNum = Number(state[`p${i}Status`] ?? 0)
-                const credits = Number(state[`p${i}Credits`] ?? 0)
-                const submitter = state[`p${i}Submitter`] ?? ''
-                if (name) {
-                    onChain.push({
-                        id: i,
-                        name: typeof name === 'string' ? name : String(name),
-                        location: typeof location === 'string' ? location : String(location),
-                        ecosystem: typeof ecosystem === 'string' ? ecosystem : String(ecosystem),
-                        cid: typeof cid === 'string' ? cid : String(cid),
-                        status: STATUS_MAP[statusNum] ?? 'pending',
-                        credits,
-                        submitter: typeof submitter === 'string' ? submitter : String(submitter),
-                    })
-                }
-            }
-            setProjects(onChain)
+            const lCount = Number(state.listingCount ?? 0)
             setProjectCount(count)
+            setListingCount(lCount)
             setTotalCreditsIssued(Number(state.totalCreditsIssued ?? 0))
 
-            // Fetch asset ID from on-chain state if we don't have it
             const onChainAssetId = state.aarnaAsset ? BigInt(Number(state.aarnaAsset)) : null
             if (onChainAssetId && onChainAssetId > 0n) {
                 setAssetId(onChainAssetId)
                 localStorage.setItem(LS_ASSET_ID, onChainAssetId.toString())
             }
 
-            // Fetch listings
-            const lCount = Number(state.listingCount ?? 0)
+            // Fetch projects — direct box reads (no signer required)
+            const onChain: AarnaProject[] = []
+            for (let i = 0; i < count; i++) {
+                try {
+                    const rec = await client.state.box.projects.value(i)
+                    if (!rec) continue
+                    const statusNum = Number(rec.status ?? 0)
+                    onChain.push({
+                        id: i,
+                        name: rec.name ?? '',
+                        location: rec.location ?? '',
+                        ecosystem: rec.ecosystem ?? '',
+                        cid: rec.cid ?? '',
+                        status: STATUS_MAP[statusNum] ?? 'pending',
+                        credits: Number(rec.credits ?? 0),
+                        submitter: rec.submitter ?? '',
+                    })
+                } catch (e) {
+                    console.warn(`Could not fetch project ${i}:`, e)
+                }
+            }
+            setProjects(onChain)
+
+            // Fetch listings — direct box reads (no signer required)
             const onChainListings: AarnaListing[] = []
-            for (let i = 0; i < Math.min(lCount, 4); i++) {
-                const seller = state[`l${i}Seller`] ?? ''
-                const amount = Number(state[`l${i}Amount`] ?? 0)
-                const price = Number(state[`l${i}Price`] ?? 0)
-                const active = Number(state[`l${i}Active`] ?? 0) === 1
-                onChainListings.push({
-                    id: i,
-                    seller: typeof seller === 'string' ? seller : String(seller),
-                    amount,
-                    pricePerToken: price,
-                    active,
-                })
+            for (let i = 0; i < lCount; i++) {
+                try {
+                    const rec = await client.state.box.listings.value(i)
+                    if (!rec) continue
+                    onChainListings.push({
+                        id: i,
+                        seller: rec.seller ?? '',
+                        amount: Number(rec.amount ?? 0),
+                        pricePerToken: Number(rec.price ?? 0),
+                        active: Number(rec.active ?? 0) === 1,
+                    })
+                } catch (e) {
+                    console.warn(`Could not fetch listing ${i}:`, e)
+                }
             }
             setListings(onChainListings)
-            setListingCount(lCount)
         } catch (e) {
             console.warn('Could not fetch on-chain state:', e)
         }
@@ -176,6 +176,7 @@ export function useAarna() {
         await fetchOnChainProjects(appClient)
     }, [appClient, fetchOnChainProjects])
 
+    // Read-only connect on mount if we have a stored appId
     useEffect(() => {
         if (!appId || appClient) return
         const connectReadOnly = async () => {
@@ -191,6 +192,7 @@ export function useAarna() {
         connectReadOnly()
     }, [appId, appClient, algorand, fetchOnChainProjects])
 
+    // Reconnect with signer when wallet connects
     useEffect(() => {
         if (!activeAddress || !appId) return
         try {
@@ -206,6 +208,7 @@ export function useAarna() {
         }
     }, [activeAddress, appId, algorand, transactionSigner])
 
+    // ─── Admin: Deploy ────────────────────────────────────────────────────────
     const deploy = useCallback(async () => {
         if (!ensureWallet()) return
         setBusy(true)
@@ -219,7 +222,6 @@ export function useAarna() {
             setAppClient(client)
             setAppId(client.appId)
             localStorage.setItem(LS_APP_ID, client.appId.toString())
-            // Auto-set the validator so the Validator page works immediately
             await client.send.setValidator({ args: { addr: VALIDATOR_ADDRESS }, sender: activeAddress!, signer: transactionSigner, populateAppCallResources: true })
             await fetchOnChainProjects(client)
             enqueueSnackbar(`App deployed! ID: ${client.appId}`, { variant: 'success' })
@@ -238,14 +240,14 @@ export function useAarna() {
             enqueueSnackbar('Validator set', { variant: 'success' })
         } catch (e: any) { enqueueSnackbar(parseError(e), { variant: 'error' }) }
         finally { setBusy(false) }
-    }, [ensureWallet, needClient, appClient, enqueueSnackbar, parseError])
+    }, [ensureWallet, needClient, appClient, activeAddress, transactionSigner, enqueueSnackbar, parseError])
 
+    // ─── Token: Create AARNA ASA ──────────────────────────────────────────────
     const ensureToken = useCallback(async () => {
         if (!ensureWallet() || !needClient()) return
         setBusy(true)
         try {
             const appAddr = appClient.appAddress
-            // Fund app for MBR + inner txn fees
             await algorand.send.payment({
                 sender: activeAddress!, receiver: appAddr,
                 amount: AlgoAmount.Algo(1), signer: transactionSigner,
@@ -265,13 +267,24 @@ export function useAarna() {
         finally { setBusy(false) }
     }, [ensureWallet, needClient, appClient, algorand, activeAddress, transactionSigner, enqueueSnackbar, parseError])
 
+    // ─── Project lifecycle ────────────────────────────────────────────────────
     const submitProject = useCallback(async (
         name: string, location: string, ecosystem: string, cid: string,
     ): Promise<number | undefined> => {
         if (!ensureWallet() || !needClient()) return undefined
         setBusy(true)
         try {
-            const r = await appClient.send.submitProject({ args: { name, location, ecosystem, cid }, sender: activeAddress!, signer: transactionSigner })
+            // Fund MBR for new project box (~200+ bytes = ~106_300 µAlgo)
+            const appAddr = appClient.appAddress
+            await algorand.send.payment({
+                sender: activeAddress!, receiver: appAddr,
+                amount: AlgoAmount.MicroAlgo(106_300), signer: transactionSigner,
+            })
+            const r = await appClient.send.submitProject({
+                args: { name, location, ecosystem, cid },
+                sender: activeAddress!, signer: transactionSigner,
+                populateAppCallResources: true,
+            })
             const idx = Number(r?.return ?? 0)
             setProjects(prev => [...prev, { id: idx, name, location, ecosystem, cid, status: 'pending', credits: 0, submitter: activeAddress || '' }])
             setProjectCount(idx + 1)
@@ -279,7 +292,7 @@ export function useAarna() {
             return idx
         } catch (e: any) { enqueueSnackbar(parseError(e), { variant: 'error' }); return undefined }
         finally { setBusy(false) }
-    }, [ensureWallet, needClient, appClient, activeAddress, enqueueSnackbar, parseError])
+    }, [ensureWallet, needClient, appClient, algorand, activeAddress, transactionSigner, enqueueSnackbar, parseError])
 
     const approveProject = useCallback(async (projectId: number, credits: number) => {
         if (!ensureWallet() || !needClient()) return
@@ -289,20 +302,19 @@ export function useAarna() {
         }
         setBusy(true)
         try {
-            // Auto-fix: ensure on-chain validator matches before approving
             try {
                 await appClient.send.setValidator({
                     args: { addr: VALIDATOR_ADDRESS },
                     sender: activeAddress!,
                     signer: transactionSigner,
                 })
-                console.log('[Aarna] Validator synced before approve')
-            } catch (_) { /* not admin â€” skip */ }
+            } catch (_) { /* not admin — skip */ }
 
             await appClient.send.approveProject({
                 args: { projectId: BigInt(projectId), credits: BigInt(credits) },
                 sender: activeAddress!,
                 signer: transactionSigner,
+                populateAppCallResources: true,
             })
             updateProjectStatus(projectId, 'verified', credits)
             await refreshProjects()
@@ -319,20 +331,19 @@ export function useAarna() {
         }
         setBusy(true)
         try {
-            // Auto-fix: ensure on-chain validator matches before rejecting
             try {
                 await appClient.send.setValidator({
                     args: { addr: VALIDATOR_ADDRESS },
                     sender: activeAddress!,
                     signer: transactionSigner,
                 })
-                console.log('[Aarna] Validator synced before reject')
-            } catch (_) { /* not admin â€” skip */ }
+            } catch (_) { /* not admin — skip */ }
 
             await appClient.send.rejectProject({
                 args: { projectId: BigInt(projectId) },
                 sender: activeAddress!,
                 signer: transactionSigner,
+                populateAppCallResources: true,
             })
             updateProjectStatus(projectId, 'rejected')
             await refreshProjects()
@@ -350,13 +361,11 @@ export function useAarna() {
         setBusy(true)
         try {
             const appAddr = appClient.appAddress
-            // Fund app for inner txn fees
             await algorand.send.payment({
                 sender: activeAddress!, receiver: appAddr,
                 amount: AlgoAmount.MicroAlgo(200_000), signer: transactionSigner,
             })
 
-            // Look up submitter from our projects state
             const project = projects.find(p => p.id === projectId)
             const submitter = project?.submitter || ''
 
@@ -364,7 +373,6 @@ export function useAarna() {
                 args: { projectId: BigInt(projectId) }, sender: activeAddress!, signer: transactionSigner,
                 populateAppCallResources: true,
                 extraFee: AlgoAmount.MicroAlgo(2_000),
-                // Manually pass foreign references the contract needs
                 accountReferences: submitter ? [submitter] : [],
                 assetReferences: assetId ? [BigInt(assetId)] : [],
             })
@@ -376,6 +384,7 @@ export function useAarna() {
         finally { setBusy(false) }
     }, [ensureWallet, needClient, appClient, algorand, activeAddress, transactionSigner, projects, assetId, updateProjectStatus, enqueueSnackbar, parseError])
 
+    // ─── Asset opt-in ─────────────────────────────────────────────────────────
     const optInToAsset = useCallback(async () => {
         if (!ensureWallet()) return
         if (!activeAddress) return
@@ -394,10 +403,9 @@ export function useAarna() {
         finally { setBusy(false) }
     }, [ensureWallet, appClient, assetId, algorand, activeAddress, transactionSigner, enqueueSnackbar, parseError])
 
-
+    // ─── Token balance ────────────────────────────────────────────────────────
     const [onChainBalance, setOnChainBalance] = useState<number>(0)
     const [balanceAdjustments, setBalanceAdjustments] = useState<Record<string, number>>({})
-
 
     const tokenBalance = onChainBalance + (activeAddress ? (balanceAdjustments[activeAddress] || 0) : 0)
 
@@ -419,21 +427,33 @@ export function useAarna() {
         }
     }, [activeAddress, assetId])
 
+    // ─── Marketplace ──────────────────────────────────────────────────────────
     const listForSale = useCallback(async (amount: number, pricePerToken: number) => {
-        if (!ensureWallet()) return
+        if (!ensureWallet() || !needClient()) return
         setBusy(true)
         try {
-            await new Promise(r => setTimeout(r, 600))
-            const idx = listingCount
+            // Fund MBR for new listing box (~56 bytes = ~57_300 µAlgo)
+            const appAddr = appClient.appAddress
+            await algorand.send.payment({
+                sender: activeAddress!, receiver: appAddr,
+                amount: AlgoAmount.MicroAlgo(57_300), signer: transactionSigner,
+            })
+            const r = await appClient.send.listForSale({
+                args: { amount: BigInt(amount), pricePerToken: BigInt(pricePerToken) },
+                sender: activeAddress!, signer: transactionSigner,
+                populateAppCallResources: true,
+                extraFee: AlgoAmount.MicroAlgo(2_000),
+            })
+            const idx = Number(r?.return ?? listingCount)
             setListings(prev => [...prev, { id: idx, seller: activeAddress || '', amount, pricePerToken, active: true }])
             setListingCount(idx + 1)
-            enqueueSnackbar(`Listed ${amount} AARNA tokens at ${pricePerToken} ÂµALGO each!`, { variant: 'success' })
+            enqueueSnackbar(`Listed ${amount} AARNA tokens at ${pricePerToken} µALGO each!`, { variant: 'success' })
         } catch (e: any) { enqueueSnackbar(parseError(e), { variant: 'error' }) }
         finally { setBusy(false) }
-    }, [ensureWallet, activeAddress, listingCount, enqueueSnackbar, parseError])
+    }, [ensureWallet, needClient, appClient, algorand, activeAddress, transactionSigner, listingCount, enqueueSnackbar, parseError])
 
     const buyListing = useCallback(async (listingId: number) => {
-        if (!ensureWallet()) return
+        if (!ensureWallet() || !needClient()) return
         const listing = listings.find(l => l.id === listingId)
         if (!listing || !listing.active) {
             enqueueSnackbar('Listing not available', { variant: 'warning' })
@@ -441,29 +461,39 @@ export function useAarna() {
         }
         setBusy(true)
         try {
-            await new Promise(r => setTimeout(r, 600))
+            const totalCost = BigInt(listing.amount) * BigInt(listing.pricePerToken)
+            await appClient.send.buyListing({
+                args: { listingId: BigInt(listingId), payment: totalCost },
+                sender: activeAddress!, signer: transactionSigner,
+                populateAppCallResources: true,
+                extraFee: AlgoAmount.MicroAlgo(4_000),
+            })
             setListings(prev => prev.map(l => l.id === listingId ? { ...l, active: false } : l))
-
             setBalanceAdjustments(prev => ({
                 ...prev,
                 [listing.seller]: (prev[listing.seller] || 0) - listing.amount,
                 [activeAddress!]: (prev[activeAddress!] || 0) + listing.amount,
             }))
-            enqueueSnackbar(`Bought ${listing.amount} AARNA tokens from ${listing.seller.slice(0, 6)}â€¦!`, { variant: 'success' })
+            enqueueSnackbar(`Bought ${listing.amount} AARNA tokens!`, { variant: 'success' })
         } catch (e: any) { enqueueSnackbar(parseError(e), { variant: 'error' }) }
         finally { setBusy(false) }
-    }, [ensureWallet, activeAddress, listings, enqueueSnackbar, parseError])
+    }, [ensureWallet, needClient, appClient, activeAddress, transactionSigner, listings, enqueueSnackbar, parseError])
 
     const cancelListing = useCallback(async (listingId: number) => {
-        if (!ensureWallet()) return
+        if (!ensureWallet() || !needClient()) return
         setBusy(true)
         try {
-            await new Promise(r => setTimeout(r, 400))
+            await appClient.send.cancelListing({
+                args: { listingId: BigInt(listingId) },
+                sender: activeAddress!, signer: transactionSigner,
+                populateAppCallResources: true,
+                extraFee: AlgoAmount.MicroAlgo(2_000),
+            })
             setListings(prev => prev.map(l => l.id === listingId ? { ...l, active: false } : l))
             enqueueSnackbar('Listing cancelled', { variant: 'info' })
         } catch (e: any) { enqueueSnackbar(parseError(e), { variant: 'error' }) }
         finally { setBusy(false) }
-    }, [ensureWallet, enqueueSnackbar, parseError])
+    }, [ensureWallet, needClient, appClient, activeAddress, transactionSigner, enqueueSnackbar, parseError])
 
     return {
         appId, assetId, busy, projectCount, projects, totalCreditsIssued,
