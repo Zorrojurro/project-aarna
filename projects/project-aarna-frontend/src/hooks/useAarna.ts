@@ -274,11 +274,18 @@ export function useAarna() {
         if (!ensureWallet() || !needClient()) return undefined
         setBusy(true)
         try {
-            // Fund MBR for new project box (~200+ bytes = ~106_300 µAlgo)
+            // Calculate MBR for the new project box dynamically
+            // Box key = "p" prefix (1 byte) + uint64 (8 bytes) = 9 bytes
+            // Box value = 32 (address) + 2+len(name) + 2+len(location) + 2+len(ecosystem) + 2+len(cid) + 8 (status) + 8 (credits)
+            const encoder = new TextEncoder()
+            const valueSize = 32 + (2 + encoder.encode(name).length) + (2 + encoder.encode(location).length)
+                + (2 + encoder.encode(ecosystem).length) + (2 + encoder.encode(cid).length) + 8 + 8
+            const boxKeySize = 9  // "p" + uint64
+            const boxMbr = 2500 + 400 * (boxKeySize + valueSize) + 50_000 // extra buffer
             const appAddr = appClient.appAddress
             await algorand.send.payment({
                 sender: activeAddress!, receiver: appAddr,
-                amount: AlgoAmount.MicroAlgo(106_300), signer: transactionSigner,
+                amount: AlgoAmount.MicroAlgo(boxMbr), signer: transactionSigner,
             })
             const r = await appClient.send.submitProject({
                 args: { name, location, ecosystem, cid },

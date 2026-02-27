@@ -93,7 +93,7 @@ export default function Developer() {
         }
     }
 
-    const myProjects = aarna.projects
+    const myProjects = aarna.projects.filter(p => p.submitter === activeAddress)
 
 
     if (!activeAddress) {
