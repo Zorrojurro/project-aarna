@@ -450,6 +450,7 @@ export function useAarna() {
                 sender: activeAddress!, signer: transactionSigner,
                 populateAppCallResources: true,
                 extraFee: AlgoAmount.MicroAlgo(2_000),
+                assetReferences: assetId ? [BigInt(assetId)] : [],
             })
             const idx = Number(r?.return ?? listingCount)
             setListings(prev => [...prev, { id: idx, seller: activeAddress || '', amount, pricePerToken, active: true }])
@@ -457,7 +458,7 @@ export function useAarna() {
             enqueueSnackbar(`Listed ${amount} AARNA tokens at ${pricePerToken} µALGO each!`, { variant: 'success' })
         } catch (e: any) { enqueueSnackbar(parseError(e), { variant: 'error' }) }
         finally { setBusy(false) }
-    }, [ensureWallet, needClient, appClient, algorand, activeAddress, transactionSigner, listingCount, enqueueSnackbar, parseError])
+    }, [ensureWallet, needClient, appClient, algorand, activeAddress, transactionSigner, assetId, listingCount, enqueueSnackbar, parseError])
 
     const buyListing = useCallback(async (listingId: number) => {
         if (!ensureWallet() || !needClient()) return
@@ -469,11 +470,20 @@ export function useAarna() {
         setBusy(true)
         try {
             const totalCost = BigInt(listing.amount) * BigInt(listing.pricePerToken)
+            // Fund the contract so it can pay the seller via inner txn
+            const appAddr = appClient.appAddress
+            await algorand.send.payment({
+                sender: activeAddress!, receiver: appAddr,
+                amount: AlgoAmount.MicroAlgo(Number(totalCost)),
+                signer: transactionSigner,
+            })
             await appClient.send.buyListing({
                 args: { listingId: BigInt(listingId), payment: totalCost },
                 sender: activeAddress!, signer: transactionSigner,
                 populateAppCallResources: true,
                 extraFee: AlgoAmount.MicroAlgo(4_000),
+                assetReferences: assetId ? [BigInt(assetId)] : [],
+                accountReferences: [listing.seller],
             })
             setListings(prev => prev.map(l => l.id === listingId ? { ...l, active: false } : l))
             setBalanceAdjustments(prev => ({
@@ -484,7 +494,7 @@ export function useAarna() {
             enqueueSnackbar(`Bought ${listing.amount} AARNA tokens!`, { variant: 'success' })
         } catch (e: any) { enqueueSnackbar(parseError(e), { variant: 'error' }) }
         finally { setBusy(false) }
-    }, [ensureWallet, needClient, appClient, activeAddress, transactionSigner, listings, enqueueSnackbar, parseError])
+    }, [ensureWallet, needClient, appClient, algorand, activeAddress, transactionSigner, assetId, listings, enqueueSnackbar, parseError])
 
     const cancelListing = useCallback(async (listingId: number) => {
         if (!ensureWallet() || !needClient()) return
@@ -495,12 +505,13 @@ export function useAarna() {
                 sender: activeAddress!, signer: transactionSigner,
                 populateAppCallResources: true,
                 extraFee: AlgoAmount.MicroAlgo(2_000),
+                assetReferences: assetId ? [BigInt(assetId)] : [],
             })
             setListings(prev => prev.map(l => l.id === listingId ? { ...l, active: false } : l))
             enqueueSnackbar('Listing cancelled', { variant: 'info' })
         } catch (e: any) { enqueueSnackbar(parseError(e), { variant: 'error' }) }
         finally { setBusy(false) }
-    }, [ensureWallet, needClient, appClient, activeAddress, transactionSigner, enqueueSnackbar, parseError])
+    }, [ensureWallet, needClient, appClient, activeAddress, transactionSigner, assetId, enqueueSnackbar, parseError])
 
     return {
         appId, assetId, busy, projectCount, projects, totalCreditsIssued,
